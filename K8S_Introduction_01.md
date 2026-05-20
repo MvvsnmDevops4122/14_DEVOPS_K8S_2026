@@ -1,92 +1,107 @@
-#  Kubernetes — Introduction & Features
+#  What is Kubernetes?
 
-* Kubernetes (K8s) is an open-source container orchestration platform/Engine/tool.
-* It automates the deployment, scaling, and management of containerized applications.
+* Kubernetes, also called K8s, is an open-source container orchestration platform used to automate the deployment, scaling, load balancing, and management of containerized applications.
+
+* It helps manage containers efficiently across multiple servers and ensures high availability and self-healing of applications.
 
 ---
 
-##  Container Orchestration Engine
+## What is Container Orchestration?
 
-* Container orchestration means managing containers automatically — like when to start, stop, scale, and 
-  handle traffic between them.
+* Container orchestration means managing containers automatically, such as:
 
-* Kubernetes manages clusters of containers, ensuring the application runs consistently across different environments.
+- Starting containers
+- Restarting failed containers
+- Scaling containers based on traffic
+- Load balancing application traffic
 
-###  Key Responsibilities
-
-* Container deployment : Runs containers automatically across available servers.
-
-* Scaling & descaling : Increases containers when traffic is high and decreases them when traffic is low.
-
-* Load balancing of containers: Distributes the incoming traffic equally to all containers, so no single one is overloaded.
+* Kubernetes continuously monitors the cluster and maintains the desired state of the application.
 
 ---
 
 ### Kubernetes is not a replacement for Docker
 
-* Docker helps to create containers.
+Docker and Kubernetes work together:
 
-* Kubernetes helps to manage those containers across multiple servers.
+- Docker is used to create containers.
+- Kubernetes is used to manage containers across multiple servers.
 
-* Kubernetes does not replace Docker, it replaces Docker Swarm (another orchestration tool).
-
-* So, Docker and Kubernetes work together, not against each other.
-
----
-
-##  History
-
-- Developed by Google  
-- Written in Go/Golang  
-- Donated to CNCF (Cloud Native Computing Foundation) in 2014  
-- Kubernetes v1.0 was released on July 21, 2015  
-- Current stable release: **v1.34**
+Kubernetes does not replace Docker.
+It mainly replaces Docker Swarm, which is another container orchestration tool.
 
 ---
 
-#  Kubernetes Key Features
+## History
 
-## Auto‑Scheduling
+- Developed by Google
+- Written in Go/Golang
+- Donated to CNCF (Cloud Native Computing Foundation) in 2014
+- Kubernetes v1.0 was released on July 21, 2015
 
-* Kubernetes provides an advanced scheduler to launch containers on cluster nodes.
+---
 
-* The Kubernetes Scheduler automatically assigns Pods to available nodes.
+ # Kubernetes Key Features / Key Responsibilities
 
-* It checks resources (CPU, memory), node conditions, and policies/constraints.
+---
 
-## Self-Healing Capabilities
+## 1. Auto-Scheduling
 
-* Kubernetes provides rescheduling, replacing, and restarting the containers that are dead.
+- Kubernetes provides an advanced scheduler to launch containers on cluster nodes.
 
-## Automated Rollouts and Rollbacks
+- The Kubernetes Scheduler automatically assigns Pods to available worker nodes.
 
-* Allows changes in app configuration or container image to be rolled out gradually
-  
-* Supports rollback in case of failure
+- It checks:
+  - CPU and memory resources
+  - Node conditions
+  - Policies and constraints
 
-## Horizontal Scaling 
+---
 
-* Kubernetes can automatically scale your application up or down based on metrics like CPU usage, memory, or custom thresholds.
+## 2. Self-Healing Capabilities
 
-<img width="978" height="529" alt="image" src="https://github.com/user-attachments/assets/7c52acfc-d83d-4936-b325-8fbd1dde7ca9" />
+- Kubernetes automatically:
+  - Restarts failed containers
+  - Replaces unhealthy Pods
+  - Reschedules Pods to healthy nodes
 
-## Service Discovery & Load Balancing:
+- This helps maintain application availability.
 
-<img width="927" height="532" alt="image" src="https://github.com/user-attachments/assets/1497ee0e-667e-4648-aaf7-a84345bc125d" />
+---
+## 3. Automated Rollouts and Rollbacks
 
-* In Kubernetes, you don’t have to manually assign IPs to communication between Pods/containers.
+- Kubernetes gradually updates applications without downtime.
 
-* Kubernetes automatically assigns an IP address to each container.
+- If the new version fails, Kubernetes can revert the application to the previous stable version.
 
-* Exposes containers using DNS names or IPs and distributes traffic.
+---
 
-* Distributes the incoming traffic equally to all containers, so no single one is overloaded.
+## 4. Horizontal Scaling
 
-## Storage Orchestration
+- Kubernetes can automatically scale applications up or down based on:
+  - CPU usage
+  - Memory usage
+  - Custom metrics
 
-* Kubernetes supports mounting local storage or cloud provider storage (e.g., AWS EBS, GCP Persistent Disks)
+- This is called Horizontal Pod Autoscaling (HPA).
 
-* Supports NFS, iSCSI, etc.
+---
+
+### 5. Load Balancing
+
+- Kubernetes distributes incoming traffic equally across Pods/containers so that no single Pod is overloaded.
+
+---
+
+### 7. Service Discovery & Networking
+
+- Kubernetes enables communication between containers using Services and internal DNS.
+
+---
+
+## 8. Storage Orchestration
+
+Kubernetes can automatically manage storage for containers using Persistent Volumes (PV) and Persistent Volume Claims (PVC).
+
 ---
 
 #  Kubernetes Architecture Overview
