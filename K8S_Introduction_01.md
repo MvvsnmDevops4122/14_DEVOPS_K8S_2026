@@ -104,88 +104,152 @@ Kubernetes can automatically manage storage for containers using Persistent Volu
 
 ---
 
-#  Kubernetes Architecture Overview
+# Kubernetes Architecture Overview
 
-<img width="1402" height="882" alt="image" src="https://github.com/user-attachments/assets/4b67947d-7fa8-48f0-83a3-1b891e0bcbb1" />
+---
 
-* Kubernetes has two main components:
+Kubernetes architecture mainly consists of two components:
 
-  1. Control Plane (Master)
+1. Control Plane (Master Node)
+2. Worker Nodes
 
-  2. Nodes (Workers/Minions/Slaves)
+- A group of Control Plane and Worker Nodes together forms a Kubernetes Cluster.
 
-A group of nodes (Control Plane + Workers) together form a Kubernetes Cluster.
+---
 
-##  1. Control Plane (Master)
+# 1. Control Plane (Master Node)
 
-* This is the brain of the cluster, handling decisions and maintaining the overall cluster state.
+- The Control Plane is the brain of the Kubernetes cluster.
 
-# API Server: 
+- It manages the entire cluster and maintains the desired state.
 
-* The API Server is the front-end of the Kubernetes control plane and the heart of the cluster.
+---
 
-* It acts as the central hub for communication.
+## Main Components
 
-* It accepts REST API requests (from kubectl, UIs, or other tools), validates them.
+---
 
-* It retrieves or stores data in etcd, and manages authentication and authorization to control access.
+# API Server
 
-# etcd:
+- The API Server is the front-end and central communication hub of the Kubernetes Control Plane.
 
-*  etcd is a Key-value store.
+- It receives requests from kubectl, UI dashboards, and external tools.
 
-* etcd holds the current state of all Kubernetes resources, including Pods, Secrets (for sensitive information), 
+- It validates requests and communicates with other Kubernetes components.
 
-  ConfigMaps (for non-sensitive configuration data), Deployments, Services, and more.
+- It stores and retrieves cluster information from etcd.
 
-* When a request is made through the API Server, etcd provides the necessary information, 
+- It also handles authentication and authorization.
 
-  such as the list of Pods and their statuses.
+---
 
-# Scheduler:
+# etcd
 
-* The scheduler identifies the unscheduled pod and assigns it to a node.  
+- etcd is a distributed key-value store used by Kubernetes.
 
-* It selects the best node for each pod based on available CPU, memory, and other criteria.
+- It stores the current state and configuration of the Kubernetes cluster.
+
+- It stores information about:
+  - Pods
+  - Deployments
+  - Services
+  - Secrets
+  - ConfigMaps
+  - Nodes
+
+- The API Server stores and retrieves cluster information from etcd.
+
+---
+
+# Scheduler
+
+- The Scheduler identifies Pods that are not assigned to any Worker Node.
+
+- It selects the best Worker Node for each Pod based on:
+  - CPU availability
+  - Memory availability
+  - Resource requirements
+  - Node conditions
+
+- After selecting the suitable node, it assigns the Pod to that node.
+
+---
 
 # kube-controller-manager
 
-* The Controller Manager monitors the state of all nodes and resources in the cluster.
+- The Controller Manager continuously monitors the state of the cluster and its resources.
 
-* It ensure everything is working properly and matches the desired state.
- 
-* If something goes wrong, like a Pod crash, it automatically takes action to fix it by restarting or rescheduling the Pod.
+- It ensures the actual state of the cluster matches the desired state.
 
-# cloud-controller-manager:
+- If any issue occurs, such as a Pod failure or node failure, it automatically takes corrective actions like restarting, recreating, or rescheduling Pods.
 
-* Integrates with cloud provider APIs (AWS, Azure, GCP) to manage cloud-specific resources (load balancers, storage, etc.).
+---
 
-## 2. Node Components (Workers of the cluster)
+# cloud-controller-manager
 
-# kubelet: 
+- The cloud-controller-manager integrates Kubernetes with cloud platforms such as AWS, Azure, and GCP.
 
-* The Kubelet is an agent on each worker node that makes sure Pods are running properly.
+- It manages cloud resources like Load Balancers, storage, and networking services.
 
-* The Kubelet running on the node detects the scheduled pod and starts the container runtime.
+---
 
-* If a Pod on the node crashes or has a problem, the Kubelet informs the API Server.
+# 2. Worker Nodes
 
-* The API Server passes this info to the Controller Manager, which then fixes it (like restarting or rescheduling the Pod).
+---
 
-👉 In short: Kubelet → API Server → Controller Manager → Fix the Pod ✅
+Worker Nodes run the actual application containers.
 
-# kube-proxy: 
- 
-* Maintains network rules and enables service-to-pod communication inside and outside the cluster.
+---
 
-# Pods: 
+## Main Components
 
-* Smallest deployable units in Kubernetes; contain one or more containers
- 
-# CRI (Container Runtime Interface): 
+---
 
-* Interface between kubelet and container runtime (e.g., containerd, Docker)
+### kubelet
 
-* The Container Runtime is the software on each worker node that actually runs the containers.
+- kubelet is an agent that runs on each Worker Node.
+
+- It communicates with the API Server and ensures Pods are running properly on the node.
+
+- It starts and manages containers using the container runtime.
+
+- If any Pod fails or becomes unhealthy, kubelet reports the issue to the API Server.
+
+- The API Server passes the information to the Controller Manager, which takes corrective actions such as restarting or rescheduling the Pod.
+
+👉 Flow:
+
+Kubelet → API Server → Controller Manager → Fix the Pod
+
+---
+
+# kube-proxy
+
+- kube-proxy manages network rules on each Worker Node.
+
+- It enables communication between Services and Pods inside and outside the cluster.
+
+- It also handles load balancing of network traffic.
+
+---
+
+# Pods
+
+- Pods are the smallest deployable units in Kubernetes.
+
+- A Pod contains one or more containers.
+
+---
+
+# CRI (Container Runtime Interface)
+
+- CRI is the interface between kubelet and the container runtime.
+
+- The container runtime is responsible for running containers on Worker Nodes.
+
+Examples:
+- containerd
+- CRI-O
+- Docker
 
 ---
