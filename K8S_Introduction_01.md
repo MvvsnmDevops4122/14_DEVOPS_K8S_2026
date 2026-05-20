@@ -108,6 +108,10 @@ Kubernetes can automatically manage storage for containers using Persistent Volu
 
 ---
 
+<img width="949" height="589" alt="image" src="https://github.com/user-attachments/assets/d5b381bc-67ff-48f5-b6ea-7e6e2ccffaf1" />
+
+---
+
 Kubernetes architecture mainly consists of two components:
 
 1. Control Plane (Master Node)
