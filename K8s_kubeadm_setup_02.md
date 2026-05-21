@@ -389,14 +389,16 @@ echo "========== Kubernetes Common Setup Completed Successfully =========="
 ```.
 
 ---
+
 # Master Node Setup Notes
+
 ---
 
 # Step 1: Initialize Kubernetes Master
 
 Use this recommended command:
 
-```bash id="master1"
+```bash
 kubeadm init --pod-network-cidr=192.168.0.0/16
 ```
 
@@ -406,7 +408,7 @@ kubeadm init --pod-network-cidr=192.168.0.0/16
 
 Use:
 
-```bash id="master2"
+```bash
 kubeadm init --cri-socket unix:///run/containerd/containerd.sock --pod-network-cidr=192.168.0.0/16
 ```
 
@@ -416,7 +418,7 @@ kubeadm init --cri-socket unix:///run/containerd/containerd.sock --pod-network-c
 
 Install:
 
-```bash id="master3"
+```bash
 apt-get update
 
 apt-get install -y conntrack
@@ -424,7 +426,7 @@ apt-get install -y conntrack
 
 Verify:
 
-```bash id="master4"
+```bash
 which conntrack
 ```
 
@@ -432,7 +434,7 @@ which conntrack
 
 # Step 2: Configure kubectl
 
-```bash id="master5"
+```bash
 mkdir -p $HOME/.kube
 
 cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -444,7 +446,7 @@ chown $(id -u):$(id -g) $HOME/.kube/config
 
 # Step 3: Verify Cluster
 
-```bash id="master6"
+```bash
 kubectl get nodes
 
 kubectl get pods -n kube-system
@@ -470,7 +472,7 @@ So use ONLY Calico.
 
 # Install Calico
 
-```bash id="master7"
+```bash
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/calico.yaml
 ```
 
@@ -478,7 +480,7 @@ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/
 
 # Step 5: Verify Network
 
-```bash id="master8"
+```bash
 kubectl get pods -A
 ```
 
@@ -490,7 +492,7 @@ Wait until all:
 
 show:
 
-```text id="master9"
+```text
 Running
 ```
 
@@ -498,13 +500,13 @@ Running
 
 # Step 6: Verify Node Ready
 
-```bash id="master10"
+```bash
 kubectl get nodes
 ```
 
 Expected:
 
-```text id="master11"
+```text
 STATUS = Ready
 ```
 
@@ -512,14 +514,61 @@ STATUS = Ready
 
 # Step 7: Generate Worker Join Command
 
-```bash id="master12"
+```bash
 kubeadm token create --print-join-command
 ```
 
 Example:
 
-```bash id="master13"
+```bash
 kubeadm join 172.31.17.111:6443 --token TOKEN --discovery-token-ca-cert-hash sha256:HASH
+```
+
+---
+
+# Important Kubernetes Ports
+
+## Master Node Ports
+
+| Port | Purpose |
+|---|---|
+| 6443 | Kubernetes API Server |
+| 2379-2380 | etcd |
+| 10250 | kubelet |
+| 10257 | controller manager |
+| 10259 | scheduler |
+
+---
+
+## Worker Node Ports
+
+| Port | Purpose |
+|---|---|
+| 10250 | kubelet |
+| 30000-32767 | NodePort services |
+
+---
+
+# Verify Cluster Information
+
+```bash
+kubectl cluster-info
+```
+
+---
+
+# Check Nodes Detailed Information
+
+```bash
+kubectl describe node <node-name>
+```
+
+---
+
+# Check All Resources
+
+```bash
+kubectl get all -A
 ```
 
 ---
