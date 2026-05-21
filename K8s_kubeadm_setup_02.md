@@ -1,63 +1,82 @@
-# Types of Kubernetes clusters:
-
-1. Self Managed Clusters
-
-2. Cloud Provider Clusters
-
-# 1.Self Managed Cluster:
-
-* A group of servers (physical or virtual) that your team or organization manages directly, instead of using
-
-  an outside service provider or cloud vendor.
-
-## Minikube: \[single node k8s cluster]
-
-* Runs a single-node Kubernetes cluster on your local machine, used mainly for development and testing.
-
-* Kubernetes takes care of pod failures, but node failure recovery is manual—you need to fix node issues yourself.
-
-## Kubeadm: \[multi node k8s cluster]
-
-* Used to create multi-node clusters (e.g., 1 master, 2 worker nodes) for both testing and production.
-
-* Like Minikube, it automatically handles pod failures, but you need to manually fix any failed nodes.
-
-## Note:
-
-* This is the main drawback of self-managed Kubernetes: if a pod fails, Kubernetes will automatically recover,
-
-  but if a node fails, you must fix it manually.
-
-* Many teams choose cloud providers, where node failures are handled automatically by the cloud platform.
+# Types of Kubernetes Clusters
 
 ---
 
-# 2. Cloud Provider Clusters
- 
-EKS (AWS Elastic Kubernetes Service)
+Kubernetes clusters are mainly divided into two types:
 
-AKS (Azure Kubernetes Service)
-
-GKE (Google Kubernetes Engine)
-
-* AWS EKS, Azure AKS, Google GKE
-
-* Fully-managed Kubernetes services provided by cloud vendors.
-
-* Kubernetes automatically restores failed pods.
-
-* Node (virtual machine) failures are handled by the cloud provider—nodes are recreated or replaced automatically without your
-
-  manual intervention.
+1. Self-Managed Clusters
+2. Cloud-Managed Clusters
 
 ---
 
-## Summary:
+# 1. Self-Managed Clusters
 
-Application failure: If Pod down inside node is called application failure.
+- In self-managed clusters, the organization manages the Kubernetes infrastructure and nodes manually.
 
-Infra failure: If Entire node down is called Infra failure.
+- The team is responsible for:
+  - Installation
+  - Configuration
+  - Upgrades
+  - Maintenance
+  - Troubleshooting
 
+## Minikube
+
+- Single-node Kubernetes cluster.
+
+- Mainly used for:
+  - Learning
+  - Development
+  - Testing
+
+- Runs on a local machine.
+
+---
+
+## kubeadm
+
+- Used to create multi-node Kubernetes clusters.
+
+Example:
+- 1 Control Plane Node
+- Multiple Worker Nodes
+
+- Used for:
+  - Testing
+  - Production environments
+
+---
+
+## Drawback of Self-Managed Clusters
+
+- Kubernetes automatically handles Pod failures.
+
+- But if a node fails, it must be fixed manually by the administrator.
+
+---
+
+# 2. Cloud-Managed Clusters
+
+Cloud providers offer fully managed Kubernetes services.
+
+Examples:
+- Amazon EKS
+- Azure Kubernetes Service
+- Google Kubernetes Engine
+
+---
+
+# Features of Cloud-Managed Clusters
+
+- Kubernetes automatically handles Pod failures.
+
+- Cloud providers automatically manage:
+  - Node failures
+  - Infrastructure maintenance
+  - Scaling
+  - High availability
+
+- If a node fails, the cloud provider automatically recreates or replaces it.
 ---
 
 ### Lab Setup: Kubeadm on AWS EC2 (Ubuntu 22.04) ###
@@ -130,8 +149,8 @@ sudo apt update && sudo apt upgrade -y
 🔗 Ref:[https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/) (Taken from here)
 
 ```bash
-swapoff -a      
-sed -i '/ swap / s/^$.*$\$/#\1/g' /etc/fstab  
+swapoff -a
+sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab 
 ```
 
 # Step 4: Enable required kernel modules
@@ -259,22 +278,27 @@ systemctl enable kubelet.service
 ```
 ---
 
-### Final Script: k8s-common-setup.sh
+### Kubernetes Common Setup Script
 
-```bash
+---
+
 #!/bin/bash
 
 set -e
 
-# Step 2: Update system
-sudo apt update && sudo apt upgrade -y
+echo "========== Updating System =========="
 
-# Step 3: Disable Swap on All Nodes (Kubernetes does not allow swap)
+apt update -y
+apt upgrade -y
+
+echo "========== Disable Swap =========="
+
 swapoff -a
 sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
-# Step 4: Enable required kernel modules
-cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+echo "========== Enable Kernel Modules =========="
+
+cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay
 br_netfilter
 EOF
@@ -282,8 +306,9 @@ EOF
 modprobe overlay
 modprobe br_netfilter
 
-# Step 5: Set system networking params
-cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+echo "========== Configure Sysctl =========="
+
+cat <<EOF | tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward                 = 1
@@ -291,203 +316,359 @@ EOF
 
 sysctl --system
 
-### Install Container Runtime (containerd) ###
+echo "========== Install Required Packages =========="
 
-# Step 6: Update packages and Install dependencies
-apt-get update -y && apt-get install -y ca-certificates curl gnupg lsb-release
+apt-get install -y \
+curl \
+gnupg \
+ca-certificates \
+apt-transport-https \
+software-properties-common \
+conntrack
 
-# Step 7: Add Docker GPG key
+echo "========== Install Containerd =========="
+
 mkdir -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
-# Step 8: Add Docker repository
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
-# Step 9: Install containerd
-apt-get update -y
-apt-get install -y containerd.io
+echo \
+"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+https://download.docker.com/linux/ubuntu \
+$(lsb_release -cs) stable" | \
+tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# Step 10: Configure containerd
-containerd config default > /etc/containerd/config.toml
+apt update -y
 
-# Step 11: Update the configuration cgroup as systemd for containerd
-sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+apt install -y containerd.io
 
-# Step 12: Restart and enable containerd
+echo "========== Configure Containerd =========="
+
+mkdir -p /etc/containerd
+
+containerd config default | tee /etc/containerd/config.toml > /dev/null
+
+sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+
 systemctl restart containerd
 systemctl enable containerd
-systemctl status containerd
 
-### Install kubelet, kubeadm, kubectl ###
+echo "========== Install Kubernetes Packages =========="
 
-# Step 13: Update packages and install dependencies
-apt-get update
-apt-get install -y apt-transport-https ca-certificates curl
+mkdir -p /etc/apt/keyrings
 
-# Step 14: Add Kubernetes signing key
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | \
+gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-# Step 15: Add Kubernetes repo
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
+https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /" | \
+tee /etc/apt/sources.list.d/kubernetes.list
 
-# Step 16: Update package and install kubelet, kubeadm, kubectl
-apt-get update
-apt-get install -y kubelet kubeadm kubectl
+apt update -y
 
-# Step 17: Prevent them from auto-updating
+apt install -y kubelet kubeadm kubectl
+
 apt-mark hold kubelet kubeadm kubectl
 
-# Step 18: Enable and start kubelet service
+echo "========== Enable Kubelet =========="
+
 systemctl daemon-reload
-systemctl start kubelet
-systemctl enable kubelet.service
+systemctl enable kubelet
+systemctl restart kubelet
 
-echo "✅ Common Kubernetes setup completed successfully on this node!"
+echo "========== Verify Services =========="
 
+systemctl status containerd --no-pager
+systemctl status kubelet --no-pager
 
-```
+echo "========== Kubernetes Common Setup Completed Successfully =========="
+
+---
+Your notes are mostly correct ✅
+But based on all issues you faced, below are important corrections.
+
 ---
 
-### 🔹 Master Node Setup ###
+# Master Node Setup Notes
 
-### [https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/)
+---
 
 # Step 1: Initialize Kubernetes Master
 
----
-```bash
-kubeadm init
+Use this recommended command:
 
-IF Error
-\#sudo kubeadm init --cri-socket /run/containerd/containerd.sock
-
-1) Install conntrack
-sudo apt-get update
-# try the common package name first
-sudo apt-get install -y conntrack || sudo apt-get install -y conntrack-tools
-
-
-Verify it exists:
-
-which conntrack || conntrack --help
-
-
-If apt says package not found, enable universe and try again:
-
-sudo add-apt-repository universe
-sudo apt-get update
-sudo apt-get install -y conntrack
+```bash id="master1"
+kubeadm init --pod-network-cidr=192.168.0.0/16
 ```
 
-# Step 2: Configure kubeconfig for kubectl
+---
+
+# If You Get CRI Socket Error
+
+Use:
+
+```bash id="master2"
+kubeadm init --cri-socket unix:///run/containerd/containerd.sock --pod-network-cidr=192.168.0.0/16
+```
 
 ---
-```bash
+
+# If conntrack Error Comes
+
+Install:
+
+```bash id="master3"
+apt-get update
+
+apt-get install -y conntrack
+```
+
+Verify:
+
+```bash id="master4"
+which conntrack
+```
+
+---
+
+# Step 2: Configure kubectl
+
+```bash id="master5"
 mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-# Step 3: Verify cluster status
-
 ---
-```bash
+
+# Step 3: Verify Cluster
+
+```bash id="master6"
 kubectl get nodes
+
 kubectl get pods -n kube-system
 ```
 
-# Step 4: Install CNI plugin (Choose one: weave or calico)
+---
+
+# Step 4: Install CNI Plugin
+
+## IMPORTANT
+
+Do NOT use Weave Net with Kubernetes v1.31.
+
+You faced:
+
+* `weave-net CrashLoopBackOff`
+* `Node NotReady`
+* `API server connection refused`
+
+So use ONLY Calico.
 
 ---
 
-# Weave Net (Recommended - simple)
-```bash
-kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
-```
-# OR Calico
+# Install Calico
 
-```bash
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+```bash id="master7"
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/calico.yaml
 ```
-# Step 5: Verify network and pods
 
 ---
-```bash
 
+# Step 5: Verify Network
+
+```bash id="master8"
+kubectl get pods -A
+```
+
+Wait until all:
+
+* calico pods
+* coredns
+* kube-system pods
+
+show:
+
+```text id="master9"
+Running
+```
+
+---
+
+# Step 6: Verify Node Ready
+
+```bash id="master10"
 kubectl get nodes
-kubectl get pods --all-namespaces
 ```
-# Step 6: Generate join command for worker nodes
+
+Expected:
+
+```text id="master11"
+STATUS = Ready
+```
 
 ---
-```bash
+
+# Step 7: Generate Worker Join Command
+
+```bash id="master12"
 kubeadm token create --print-join-command
 ```
-### Kubernetes Master Node Setup Script ###
 
-```bash
+Example:
 
+```bash id="master13"
+kubeadm join 172.31.17.111:6443 --token TOKEN --discovery-token-ca-cert-hash sha256:HASH
+```
+
+---
+
+# Worker Node Important Fix
+
+Before joining worker node:
+
+Install conntrack:
+
+```bash id="master14"
+apt-get update
+
+apt-get install -y conntrack
+```
+
+Then run join command.
+
+---
+
+# Final Verification
+
+On master node:
+
+```bash id="master15"
+kubectl get nodes
+```
+
+Expected:
+
+```text id="master16"
+master-node   Ready
+worker-node   Ready
+```
+
+
+---
+
+Your script is good, but based on the issues you faced, these corrections are required:
+
+* Add pod CIDR
+* Use Calico instead of Weave
+* Fix escaped `$`
+* Add wait/check steps
+* Store join command properly
+* Add error handling
+
+---
+
+# Updated Stable Kubernetes Master Setup Script
+
+```bash id="masterscript1"
 #!/bin/bash
 
-echo "🚀 Starting Kubernetes Master Node setup..."
+set -e
 
-# Step 1: Initialize Kubernetes Master
+echo "🚀 Starting Kubernetes Master Node Setup..."
 
-echo "🔹 Initializing Kubernetes Master..."
-kubeadm init --cri-socket /run/containerd/containerd.sock
+echo "=============================================="
+echo "Step 1: Initialize Kubernetes Master"
+echo "=============================================="
 
-# Step 2: Configure kubeconfig for kubectl
+kubeadm init \
+--cri-socket unix:///run/containerd/containerd.sock \
+--pod-network-cidr=192.168.0.0/16
 
-echo "🔹 Setting up kubeconfig..."
-mkdir -p \$HOME/.kube
-cp -i /etc/kubernetes/admin.conf \$HOME/.kube/config
-chown \$(id -u):\$(id -g) \$HOME/.kube/config
+echo "=============================================="
+echo "Step 2: Configure kubeconfig"
+echo "=============================================="
 
-# Step 3: Verify cluster status
+mkdir -p $HOME/.kube
 
-echo "🔹 Verifying cluster status..."
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+chown $(id -u):$(id -g) $HOME/.kube/config
+
+echo "=============================================="
+echo "Step 3: Verify Cluster Status"
+echo "=============================================="
+
 kubectl get nodes
+
 kubectl get pods -n kube-system
 
-# Step 4: Install CNI plugin (Weave Net)
+echo "=============================================="
+echo "Step 4: Install Calico Network Plugin"
+echo "=============================================="
 
-kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/calico.yaml
 
-# Step 5: Verify nodes and podsecho "🔹 Checking nodes and pods..."
+echo "=============================================="
+echo "Waiting 60 Seconds for Cluster Networking..."
+echo "=============================================="
+
+sleep 60
+
+echo "=============================================="
+echo "Step 5: Verify Nodes and Pods"
+echo "=============================================="
 
 kubectl get nodes
-kubectl get pods --all-namespaces
 
-# Step 6: Generate join command for worker nodes
+kubectl get pods -A
 
-echo "🔹 Generating join command for worker nodes..."
-kubeadm token create --print-join-command
+echo "=============================================="
+echo "Step 6: Generate Worker Join Command"
+echo "=============================================="
 
-echo "✅ Master setup completed successfully!"
-echo "➡️ Use the join command stored in /root/join-worker.sh on worker nodes."
+kubeadm token create --print-join-command | tee /root/join-worker.sh
 
-👉 Save it: master-setup.sh
+chmod +x /root/join-worker.sh
 
-👉 Make executable: chmod +x master-setup.sh
+echo "=============================================="
+echo "✅ Kubernetes Master Setup Completed Successfully!"
+echo "=============================================="
 
-👉 Run as root: ./master-setup.sh
-
+echo "➡️ Worker Join Command saved in:"
+echo "/root/join-worker.sh"
 ```
 
-### 🔹 Worker Node Setup ###
+---
 
-Run the join command from the master on each worker:
+# Save Script
 
-kubeadm join 172.31.39.61:6443 --token fum1dp.ifem6w2f3f54fv2m&#x20;
-\--discovery-token-ca-cert-hash sha256\:e58fc3ea9fd12f0edfaa3541ba82e3673957a4d3f1c7f2d0ae094a15d53e46e1
-
-
-###  🔹 Validate the Cluster (from Master) ###
-```bash
-kubectl get nodes   # should show master + workers as "Ready"
-
-kubectl get pods --all-namespaces
+```bash id="masterscript2"
+vi master-setup.sh
 ```
+
+Paste script.
+
+---
+
+# Give Execute Permission
+
+```bash id="masterscript3"
+chmod +x master-setup.sh
+```
+
+---
+
+# Run Script
+
+```bash id="masterscript4"
+./master-setup.sh
+```
+---
+
 ## 🔹 Deploy a Sample App ##
 
 # Create test namespace
