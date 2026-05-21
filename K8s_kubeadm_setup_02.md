@@ -282,6 +282,8 @@ systemctl enable kubelet.service
 
 ---
 
+```bash id="masterscript1"
+
 #!/bin/bash
 
 set -e
@@ -384,14 +386,10 @@ systemctl status kubelet --no-pager
 
 echo "========== Kubernetes Common Setup Completed Successfully =========="
 
----
-Your notes are mostly correct ✅
-But based on all issues you faced, below are important corrections.
+```.
 
 ---
-
 # Master Node Setup Notes
-
 ---
 
 # Step 1: Initialize Kubernetes Master
