@@ -2,19 +2,11 @@
 
 ---
 
-## 1. What is a Kubernetes Namespace?
+# 1. What is a Kubernetes Namespace?
 
-- A **Namespace** in Kubernetes is a **logical partition of the cluster**.  
-- It is used to **organize, isolate, and manage resources**.  
-- Within a namespace, you can deploy resources such as:
-  - Pods
-  - Services
-  - Deployments
-  - ConfigMaps
-  - Secrets
-- It acts like a **virtual cluster inside the main cluster**.  
-- Namespaces divide a cluster into **multiple virtual workspaces**.  
-- This makes it easier to manage resources for different teams, projects, or environments (e.g., Dev, Test, Prod).
+- A Namespace in Kubernetes is a logical partition used to organize and isolate cluster resources like Pods, Services, Deployments, ConfigMaps, and Secrets.
+
+- It acts like a virtual cluster inside the main Kubernetes cluster, helping manage multiple teams, projects, or environments such as Dev, Test, and Production.
   
 <img width="995" height="504" alt="image" src="https://github.com/user-attachments/assets/7cf07ae3-0fed-46ae-98bf-4af5660138c9" />
 
@@ -22,56 +14,156 @@
 
 ## 2. What Namespaces Provide
 
-1. **Isolation**  
-   Keeps resources separate so different teams or environments don’t affect each other.  
+# 2. What Namespaces Provide
 
-2. **Access Control (RBAC – Role-Based Access Control)**  
-   - Restrict access to certain namespaces using RBAC policies.  
-   - Only authorized users/teams can view or manage resources in that namespace.  
+## 1. Isolation
 
-3. **Resource Quotas**  
-   Set CPU and memory limits for each namespace to prevent overuse.  
+Namespaces keep resources separate inside the same Kubernetes cluster.
 
-4. **Environment Segregation**  
-   Create separate namespaces for different environments:  
-   - `dev` – Development  
-   - `staging` – Testing / Pre-production  
-   - `prod` – Production  
+### Practical Example
 
-   Each environment gets its own namespace, keeping workloads and settings isolated.  
+Suppose:
+
+* Dev team deploys application in `dev` namespace
+* Production app runs in `prod` namespace
+
+If Dev team deletes pods in `dev`, Production application in `prod` is not affected.
+
+## 2. Access Control (RBAC)
+
+Namespaces help control who can access resources.
+
+### Practical Example
+
+* Developers get access only to `dev`
+* QA team gets access to `test`
+* Admin team manages `prod`
+
+This improves security.
+
+## 3. Resource Quotas
+
+Namespaces allow setting CPU and memory limits.
+
+### Practical Example
+
+Suppose Dev namespace gets:
+
+* 2 CPU
+* 4GB RAM
+
+Even if developers deploy many pods, they cannot use more than assigned resources.
+
+This protects Production workloads.  
 
 ---
 
-## 3. Types of Namespaces in Kubernetes
+# 3. Types of Namespaces in Kubernetes
 
-### 1. `default`
-- Used if no namespace is specified when creating a resource.  
-- All resources go here by default.  
+## 1. `default` Namespace
 
-### 2. `kube-system`
-- Contains Kubernetes system components and internal services.  
-- Don’t modify unless required.  
+* This is the default namespace in Kubernetes.
+* If you do not mention any namespace while creating resources, Kubernetes automatically creates them here.
 
-### 3. `kube-public`
-- Visible to everyone (even without login).  
-- Mostly used for public cluster information.  
+### Practical Example
 
-### 4. `kube-node-lease`
-- Manages node lease objects.  
-- Helps track node health and status.  
-- Reduces the load on the Kubernetes control plane.  
+```bash id="8tkzcv"
+kubectl run nginx --image=nginx
+```
 
-### 5. **User-defined**
-- Namespaces you create for your own use.  
-- Example: `dev`, `test`, `prod`.  
+The pod will be created in the `default` namespace.
+
+## 2. `kube-system` Namespace
+
+* Used by Kubernetes internal system components.
+* Contains important cluster services and control plane components.
+* Usually administrators manage this namespace.
+
+### Examples
+
+* CoreDNS
+* kube-apiserver
+* kube-proxy
+* etcd
+
+### Practical Example
+
+```bash id="f8j5m7"
+kubectl get pods -n kube-system
+```
+
+Shows all Kubernetes system pods.
+
+## 3. `kube-public` Namespace
+
+* Public namespace accessible to all users.
+* Mainly used for public cluster-related information.
+
+### Practical Example
+
+Stores information that should be visible across the cluster.
+
+## 4. `kube-node-lease` Namespace
+
+* Used to store node lease objects.
+* Helps Kubernetes monitor node health and availability.
+* Reduces load on the Kubernetes control plane.
+
+### Practical Example
+
+Worker nodes regularly send heartbeat updates through node leases.
+
+If a node stops responding, Kubernetes detects node failure quickly.
+
+## 5. User-defined Namespace
+
+* Custom namespaces created by users.
+* Used to separate applications, teams, or environments.
+
+### Examples
+
+* `dev`
+* `test`
+* `prod`
+
+### Practical Example
+
+Create namespace:
+
+```bash id="6gvf7z"
+kubectl create namespace dev
+```
+
+Deploy application into namespace:
+
+```bash id="ymnaxv"
+kubectl apply -f app.yaml -n dev
+```
+
+Application runs only inside the `dev` namespace.
+
+# Simple Understanding
+
+| Namespace         | Purpose                        |
+| ----------------- | ------------------------------ |
+| `default`         | Default workspace              |
+| `kube-system`     | Kubernetes internal components |
+| `kube-public`     | Public cluster information     |
+| `kube-node-lease` | Node health tracking           |
+| User-defined      | Separate environments/projects |
+
+# One-Line Interview Answer
+
+“Kubernetes provides system namespaces for internal operations and user-defined namespaces for organizing and isolating applications.”
 
 ---
 
-## 4. How to Work with Namespaces
+# 4. How to Work with Namespaces
 
-### Creating a Namespace
+## Creating a Namespace
 
-**Using YAML:**
+### Using YAML
+
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -79,47 +171,51 @@ metadata:
   name: my-namespace
   labels:
     name: my-namespace
-````
+```
 
 Apply the file:
 
-```bash
+```bash id="dj3m4w"
 kubectl apply -f namespace.yaml
 ```
 
-**Using Command Line:**
+### Using Command Line
 
-```bash
+```bash id="j9s9ta"
 kubectl create namespace test
 ```
 
 ---
 
-### 1. Listing Namespaces
+## 1. Listing Namespaces
 
-```bash
+```bash id="k4n4uz"
 kubectl get namespaces
-# OR
+```
+
+OR
+
+```bash id="j2vw2f"
 kubectl get ns
 ```
 
-### 2. Viewing Namespace Details
+## 2. Viewing Namespace Details
 
-```bash
+```bash id="5lw0pr"
 kubectl describe ns my-namespace
 ```
 
-### 3. Deleting a Namespace
+## 3. Deleting a Namespace
 
 ⚠️ Warning: Deletes all resources inside the namespace.
 
-```bash
+```bash id="vjlwm3"
 kubectl delete namespace my-namespace
 ```
 
 ---
 
-## 5. Namespace Resource Quotas
+# 5. Namespace Resource Quotas
 
 * Limit resources (CPU, memory, pods) in a namespace.
 * Example YAML to limit pods to 10:
@@ -137,48 +233,50 @@ spec:
 
 Apply the quota:
 
-```bash
+```bash id="0uq0o6"
 kubectl apply -f resource-quota.yaml
 ```
 
 Check quota:
 
-```bash
+```bash id="1jlwm5"
 kubectl describe ns my-namespace
 ```
 
 ---
 
-### Creating a Pod in the Namespace to Test Quota
+## Creating a Pod in the Namespace to Test Quota
 
-```bash
+```bash id="x6d5y8"
 kubectl run nginx --image=nginx --port=80 -n my-namespace
 ```
 
 Check quota again:
 
-```bash
+```bash id="mjlwm7"
 kubectl describe ns my-namespace
 ```
 
 Edit the quota:
 
-```bash
+```bash id="b4k1h2"
 kubectl edit quota my-resource-quota -n my-namespace
 ```
-**Example output:**
 
-```
+### Example Output
+
+```text id="q9t6r1"
 Pods: 1/10 — 1 pod used, 9 left.
 ```
 
 ---
 
-## 6. Switching Namespaces in kubectl Context
+# 6. Switching Namespaces in kubectl Context
 
 Set your current namespace context so commands default to it:
 
-```bash
+```bash id="r7u3c8"
 kubectl config set-context --current --namespace=my-namespace
 ```
+
 ---
