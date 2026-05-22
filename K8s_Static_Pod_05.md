@@ -1,41 +1,85 @@
-### 🧱 Static Pods in Kubernetes
 
+# Static Pods in Kubernetes
 ---
 
 ## 1. What Is a Static Pod in Kubernetes?
 
-* A Static Pod is a special type of Pod managed directly by the kubelet on a specific node  
-  not by the Kubernetes API Server or the control plane.
+* A Static Pod is a special type of Pod managed directly by the `kubelet` on a specific node.
+
+* Static Pods are not managed by the Kubernetes API Server or Control Plane.
+
+* The `kubelet` automatically creates and manages Static Pods from manifest files stored on the node.
 
 ---
 
-## 2. Key Characteristics of Static Pods
+# 2. Key Characteristics of Static Pods
 
-### 1. Node-Specific
-* Static Pods are tied to a specific node and cannot be scheduled or moved to other nodes
+## 1. Node-Specific
 
-### 2. Managed by Kubelet
-* The kubelet watches a directory (commonly `/etc/kubernetes/manifests/`) and creates pods from the manifest files found there.
-  
-### 3. Visible but Not Controllable
-* Static Pods appear when you run `kubectl get pods`, but you cannot update, scale, or delete them from the master.
+* Static Pods are tied to a specific node and run only on that node.
 
-### 4. Self-Healing
-* If a Static Pod crashes, kubelet will restart it automatically.
-
-### 5. No Controllers
-* They are not managed by higher-level controllers like Deployments, ReplicaSets, or StatefulSets.
+* They cannot be scheduled or automatically moved to another node by Kubernetes.
 
 ---
 
-## 3. How Static Pods Work
+## 2. Managed by Kubelet
 
-* You place a pod manifest file (YAML or JSON) in the kubelet’s watched directory: `/etc/kubernetes/manifests/`
-* The kubelet detects the file and starts the pod on that node.
-* If the file is updated, the kubelet will restart the pod with the new configuration.
-* If the file is deleted, the kubelet will terminate the pod.
+* Static Pods are managed directly by the `kubelet`.
+
+* The `kubelet` continuously watches the:
+
+```text id="a1b2c3"
+/etc/kubernetes/manifests/
+```
+
+directory and automatically creates and manages Static Pods from the manifest files.
 
 ---
+
+## 3. Visible but Not Fully Controllable
+
+* Static Pods are visible when you run:
+
+```bash id="d4e5f6"
+kubectl get pods
+```
+
+* But they cannot be updated, scaled, or deleted from the Master Node.
+
+---
+
+## 4. Self-Healing
+
+* If a Static Pod crashes or stops, the `kubelet` automatically restarts it.
+
+---
+
+## 5. No Controllers
+
+* Static Pods are not managed by higher-level controllers like:
+
+  * Deployments
+  * ReplicaSets
+  * StatefulSets
+
+* They are managed only by the `kubelet`.
+
+---
+
+# 3. How Static Pods Work
+
+* Create a Pod manifest file (`YAML` or `JSON`) inside the kubelet watched directory:
+
+```text id="g7h8i9"
+/etc/kubernetes/manifests/
+```
+
+* The `kubelet` continuously monitors this directory and automatically creates the Static Pod on that node.
+
+* If the manifest file is updated, the `kubelet` automatically restarts the Pod with the updated configuration.
+
+* If the manifest file is deleted, the `kubelet` automatically stops and removes the Static Pod.
+
 
 ## 4. How Static Pods Work in Kubernetes Step by Step
 
