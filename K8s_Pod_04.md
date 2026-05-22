@@ -418,6 +418,8 @@ kubectl apply -f nginx.yaml
 
 # Example 2: Nginx Pod with ImagePullBackOff
 
+“ImagePullBackOff occurs when Kubernetes fails to pull the container image from the registry due to reasons like wrong image name, invalid tag, or authentication issues.”
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -453,14 +455,14 @@ apiVersion: v1
 kind: Pod
 
 metadata:
-  name: javawebapp
+  name: javawebapppod
   labels:
     app: javawebapp
-  namespace: test-ns
+  namespace: test
 
 spec:
   containers:
-  - name: java-container
+  - name: javawebappcon
     image: satyamolleti4599/maven-web-app:1.0.0
     ports:
     - containerPort: 8080
@@ -484,10 +486,6 @@ metadata:
 
   labels:
     app: mongo
-
-  annotations:
-    description: "A MongoDB Pod"
-
 spec:
   containers:
   - name: mongo-container
