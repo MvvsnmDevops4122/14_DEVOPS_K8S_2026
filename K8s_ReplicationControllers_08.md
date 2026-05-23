@@ -1,205 +1,184 @@
-# 📘 Kubernetes ReplicationController (RC)
 
----
-## 1. What Is a ReplicationController?
+## 1. What is a ReplicationController (RC)?
 
-* A ReplicationController (RC) is a Kubernetes object that ensures a fixed number of identical Pods are always running.
-* It acts as a controller, continuously monitoring the cluster state.
-* It takes corrective actions to maintain the desired number of Pods.
+A ReplicationController (RC) is a Kubernetes object that ensures a fixed number of identical Pods are always running in the cluster.
 
-**Key Features:**
+It acts as a controller, continuously monitoring the cluster state.
 
-1. Self-healing: If a Pod crashes or is deleted, RC creates a new one.
-2. No extras allowed: If someone manually creates extra Pods with the same labels, RC deletes them to maintain the correct count.
-3. Label-based tracking: RC uses labels, not Pod names, to find and manage Pods.
+It takes corrective actions to maintain the desired number of Pods.
 
 ---
 
-## 2. Desired vs Observed State
+## 2. Key Features
 
-* Desired state: How many Pods you want (e.g., 3).
-* Observed state: How many Pods are currently running with the correct labels.
+### 1. Self-healing
+If a Pod crashes or is deleted, the ReplicationController creates a new Pod automatically.
 
-**Reconciliation:** RC constantly compares desired vs observed state and adjusts Pods to match.
+### 2. No extra Pods allowed
+If someone manually creates extra Pods with the same labels, the ReplicationController deletes the extra Pods to maintain the desired count.
 
-**Example:**
-
-* If desired = 3, but only 2 running → RC creates 1 more.
-* If desired = 3, but 5 running (extra Pods created manually) → RC deletes 2.
-
----
-
-## 3. How ReplicationController Works
-
-* The RC uses a continuous control loop to make sure the desired number of Pods are always running.
-
-### 1. Watches All Pods
-
-* RC constantly monitors all Pods in the cluster.
-* It doesn’t track Pods by name — it uses labels to group and manage them.
-
-### 2. Filters by Label Selector
-
-* RC uses spec.selector to find Pods with matching labels.
-* Only Pods that have these labels are considered part of the RC group.
-
-### 3. Counts Matching Pods
-
-* RC checks how many Pods match the selector.
-* If the count is less than desired → RC creates new Pods using the spec.template.
-* If the count is more than desired → RC deletes the extra Pods to bring the number back to the desired state.
-
-### 4. Adopts Orphan Pods
-
-* If Pods already exist with the same labels but no controller managing them → RC can adopt those Pods.
+### 3. Label-based tracking
+The ReplicationController uses labels, not Pod names, to identify and manage Pods.
 
 ---
 
-### RC YAML Example
+## 3. Desired State vs Observed State
+
+### Desired state
+The number of Pods you want Kubernetes to maintain (e.g., 3 Pods).
+
+### Observed state
+The actual number of Pods currently running with the correct labels.
+
+### Reconciliation
+The ReplicationController continuously compares the desired state with the observed state and takes corrective actions to make them match.
+
+### Example
+
+- If desired = 3, but only 2 Pods are running → RC creates 1 more Pod.
+- If desired = 3, but 5 Pods are running (extra Pods created manually) → RC deletes 2 extra Pods.
+
+---
+
+## 4. How ReplicationController (RC) Works
+
+1. User defines the desired number of Pod replicas in the RC YAML file.
+
+2. The ReplicationController creates Pods based on the Pod template.
+
+3. RC continuously monitors the running Pods using labels and selectors.
+
+4. RC compares:
+   - Desired state
+   - Observed state
+
+5. If the number of running Pods is less than the desired count, RC creates new Pods.
+
+6. If the number of running Pods is greater than the desired count, RC deletes extra Pods.
+
+7. RC continuously ensures that the desired number of Pods is always running in the cluster.
+
+---
+
+# 5. ReplicationController (RC) YAML Example
 
 ```yaml
 apiVersion: v1
 kind: ReplicationController
+
 metadata:
-  name: javawebapprc        # controller name
+  name: javawebapprc          # ReplicationController name
   namespace: test-ns
+
 spec:
-  replicas: 3
+  replicas: 3                 # Desired number of Pods
+
   selector:
-    app: javawebapp
-  template:                # contain pod information
+    app: javawebapp           # Matches Pods with this label
+
+  template:                   # Pod template
     metadata:
-      name: javawebapppod   # pod name
-      labels:               
-        app: javawebapp     # match the labels as selectors
+      labels:
+        app: javawebapp       # Pod label
+
     spec:
       containers:
       - name: javawebappcon
-        image: satyamolleti4599/maven-web-app:1.0.0
+        image: satyamolleti4599/maven_web_app:1.0.0
         ports:
         - containerPort: 8080
-````
+```
 
-## 4. Working with ReplicationControllers
+---
 
-### 1. Create and Inspect
+# 6. Working with ReplicationController
+
+## 1. Create RC
 
 ```bash
 kubectl apply -f rc.yaml
+```
+
+---
+
+## 2. Verify Resources
+
+```bash
 kubectl get all -n test-ns
-kubectl get rc
+kubectl get rc -n test-ns
 ```
 
-### 2. Watch Self-Healing
+---
+
+## 3. Test Self-Healing
+
+Delete one Pod manually:
 
 ```bash
-kubectl delete pod javawebapprc-44v9d -n test-ns
-# RC notices and creates a new Pod, e.g. javawebapprc-dpkn2
+kubectl delete pod <pod-name> -n test-ns
 ```
 
-### 3. See Who Owns a Pod
+RC automatically creates a new Pod to maintain the desired count.
+
+---
+
+## 4. Check Pod Owner
 
 ```bash
-kubectl describe pod javawebapprc-dpkn2 -n test-ns | grep -i 'Controlled By'
+kubectl describe pod <pod-name> -n test-ns
 ```
 
-### 4. Scaling Pods (Best Practice)
+Check:
 
-**Initial State:**
+```text
+Controlled By: ReplicationController/javawebapprc
+```
 
-2 Pods: javawebapprc-b5bfp, javawebapprc-dpkn2
+---
 
-**Scale Up to 3 Pods:**
+# 7. Scaling ReplicationController
+
+## Scale Up
 
 ```bash
 kubectl scale rc javawebapprc --replicas=3 -n test-ns
 ```
 
-**Now running:**
+RC creates additional Pods.
 
-* javawebapprc-b5bfp
-* javawebapprc-dpkn2
-* javawebapprc-d2kq6 (newly created)
+---
 
-**To Scale Down (e.g., Maintenance):**
+## Scale Down
 
 ```bash
 kubectl scale rc javawebapprc --replicas=0 -n test-ns
-# All Pods removed, RC remains with 0 replicas
 ```
 
-**Scale Up Again:**
+All Pods are deleted, but the RC still exists.
+
+---
+
+## Scale Up Again
 
 ```bash
 kubectl scale rc javawebapprc --replicas=3 -n test-ns
-# RC recreates 3 Pods
 ```
 
-### 5. Deleting RC (What Happens to Pods?)
+RC recreates the Pods.
+
+---
+
+# 8. Delete ReplicationController
+
+## Delete RC with Pods
 
 ```bash
 kubectl delete rc javawebapprc -n test-ns
-# Output: replicationcontroller "javawebapprc" deleted
-kubectl get all -n test-ns
-# Output: No resources found in test-ns namespace
-# RC and its managed Pods were deleted
 ```
 
-**Keep Pods but Delete RC**
+Both:
+- RC
+- Managed Pods
 
-```bash
-kubectl delete rc javawebapprc -n test-ns --cascade=orphan
-# RC is gone, Pods remain running, but no longer managed
-```
-
----
-
-## ReplicationController Summary
-
-* Replication Controller is a key Kubernetes feature responsible for managing the pod lifecycle.
-* It ensures that the specified number of pod replicas are running at any time.
-* RC replaces crashed Pods automatically and manages Pods via labels.
-* Creating an RC with count of 1 ensures a Pod is always available.
-
-**Example YAML:**
-
-```yaml
-apiVersion: v1
-kind: ReplicationController
-metadata:
-  name: javawebapprc
-  namespace: test-ns
-spec:
-  replicas: 2
-  selector:
-    app: javawebapp
-  template:
-    metadata: 
-      name: javawebapprcpod
-      labels:
-        app: javawebapp
-    spec: 
-      containers:
-      - name: javawebapprccon
-        image: satyamolleti4599/maven-web-app:1.0.0
-        ports:
-        - containerPort: 8080
-```
-
----
-
-## Command Summary
-
-| Command                                               | Purpose                                    |
-| ----------------------------------------------------- | ------------------------------------------ |
-| `kubectl apply -f rc.yaml --dry-run=client`           | Test RC creation without applying          |
-| `kubectl apply -f rc.yaml`                            | Create RC from YAML                        |
-| `kubectl get rc -n <NS>`                              | List RCs in namespace                      |
-| `kubectl get all -n <NS>`                             | List all resources in namespace            |
-| `kubectl describe pod <pod-name> -n <NS>`             | Inspect Pod details                        |
-| `kubectl scale rc <rcName> --replicas=N -n <NS>`      | Scale Pods up/down                         |
-| `kubectl delete rc <rcName> -n <NS>`                  | Delete RC and its Pods                     |
-| `kubectl delete rc <rcName> -n <NS> --cascade=orphan` | Delete RC but keep Pods                    |
-| `kubectl delete pod <pod-name> -n <NS>`               | Delete a Pod manually to test self-healing |
-
-```
+will be deleted.
+````
