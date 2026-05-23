@@ -278,7 +278,7 @@ This confirms:
 Pod-to-Pod Communication Working
 ```
 * But Pod IPs are temporary → in real projects, use Services instead of Pod IPs.
-
+* Pods can communicate directly using Pod IPs because Kubernetes provides cluster networking.
 * “Kubernetes networking is provided automatically by CNI plugins like Calico or Flannel, which assign Pod IPs and enable Pod-to-Pod communication.”
 ---
 
