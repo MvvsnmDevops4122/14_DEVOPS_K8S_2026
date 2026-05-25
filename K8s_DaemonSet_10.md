@@ -1,136 +1,136 @@
-# DaemonSet
-
-## 1. What Is a DaemonSet?
-
-- A **DaemonSet** makes sure that one Pod runs on every Node in the cluster or only on selected Nodes.  
-- It’s perfect for background services that need to be available everywhere.
+# Kubernetes DaemonSet
 
 ---
 
-## Key Features of DaemonSets
+# 1. What Is a DaemonSet?
 
-### One Pod per Node
-- A DaemonSet makes sure exactly **one Pod** is scheduled on each Node.
+A DaemonSet is a Kubernetes object that ensures one copy of a Pod runs on every worker node in the cluster.
 
-### Automatic Pod Management
-- When a new Node is added, the DaemonSet automatically creates a Pod on it.  
+When a new node is added:
+- DaemonSet automatically creates the Pod on that node.
+
+When a node is removed:
+- DaemonSet automatically removes the Pod on that node.
+
+---
+
+# 2. Main Purpose of DaemonSet
+
+DaemonSet is mainly used for:
+- monitoring
+- logging
+- networking
+- node management tasks
+
+where one Pod must run on every node.
+
+---
+
+# 3. Key Features of DaemonSet
+
+## 1. One Pod Per Node
+
+DaemonSet automatically runs one Pod on each node.
+
+---
+
+## 2. Automatic Pod Management
+
+- When a new Node is added, the DaemonSet automatically creates a Pod on it.
 - When a Node is removed, the Pod running on that Node is also terminated.
 
-### Selective Node Deployment
-A DaemonSet can be configured to run only on specific Nodes using:  
-- Node selectors  
-- Affinity rules  
-- Taints and tolerations  
+---
+
+## 3. Runs Background Services
+
+Used for:
+- log collection
+- monitoring agents
+- networking plugins
 
 ---
 
-## 2. Common Use Cases
+## 4. Selective Node Deployment
 
-### Monitoring
-- Run tools like **Prometheus Node Exporter** or **Datadog Agent** on every Node.  
-- DaemonSet ensures one monitoring Pod runs on each Node, even if new Nodes are added.
-
-### Logging
-- Run log collectors like **Fluentd, Logstash, or Filebeat** on every Node.  
-- They collect logs from containers and the system, then send them to a central place.
-
-### Networking Services
-- Run networking tools like **kube-proxy, Calico, Flannel, or VPN clients** on all Nodes.  
-- DaemonSet ensures every Node has these tools for **network connections and rules**.
+A DaemonSet can be configured to run only on specific Nodes using:
+- Node selectors
+- Affinity rules
+- Taints and tolerations
 
 ---
 
-## 3. Understanding DaemonSet Pods in the Cluster
+# 4. Common Use Cases of DaemonSet
 
-When you run:
+## 1. Monitoring
 
-```bash
-kubectl get all -A -o wide
-````
+Tools like Prometheus Node Exporter or Datadog Agent run on every Node to monitor:
+- CPU
+- Memory
+- Disk
+- Node health
 
-* You will see many system Pods running inside the cluster, especially in the **kube-system** namespace.
-* Some Pods run only on the **Master Node**.
-* Other Pods run on **all Nodes** (Master + Workers).
-
-Each Pod is always linked to a specific Node:
-
-* Master Node → `ip-172-31-34-191`
-* Worker 1 → `ip-172-31-5-194`
-* Worker 2 → `ip-172-31-3-215`
-
-### 1. Pods Running in the Cluster
-
-Examples of Pods:
-
-* `coredns`
-* `etcd`
-* `kube-apiserver`
-* `kube-controller-manager`
-* `kube-scheduler`
-* `kube-proxy`
-* `weave-net` (CNI plugin)
-
-### 2. Control Plane Pods (Only on Master Node)
-
-Run only on Master Node (`ip-172-31-34-191`):
-
-* `etcd`
-* `kube-apiserver`
-* `kube-controller-manager`
-* `kube-scheduler`
-
-### 3. DaemonSet Pods (On All Nodes)
-
-Managed by DaemonSets → one Pod per Node:
-
-* `kube-proxy`
-* `weave-net`
-
-So you see them on **every Node**:
-
-* kube-proxy → 3 Pods (1 on Master + 2 Workers)
-* weave-net → 3 Pods (1 on Master + 2 Workers)
-
-They run on:
-
-* Master → `ip-172-31-34-191`
-* Worker 1 → `ip-172-31-5-194`
-* Worker 2 → `ip-172-31-3-215`
-
-### 4. Key Point
-
-* Some Pods run only on **Master Node** → e.g., `etcd`, `kube-apiserver`.
-* Some Pods run on **all Nodes** → e.g., `kube-proxy`, `weave-net`.
-
-👉 Controllers difference:
-
-* **ReplicaSet/Deployment** = runs multiple Pods based on replicas.
-* **DaemonSet** = runs one Pod on every Node for system services (networking, logging, monitoring).
+DaemonSet ensures one monitoring Pod runs on every Node automatically.
 
 ---
 
-## 4. Basic DaemonSet
+## 2. Logging
 
-### Step 1: Create a DaemonSet
+Tools like Fluentd, Logstash, or Filebeat run on every Node to collect:
+- container logs
+- system logs
 
-This runs an **nginx Pod** on every Worker Node.
-You don’t need to set replicas → one Pod per Node automatically.
+These logs are sent to a central logging server.
 
-Example `ds.yaml`:
+DaemonSet ensures one logging Pod runs on every Node.
+
+---
+
+## 3. Networking Services
+
+Tools like kube-proxy, Calico, and Flannel run on every Node to manage:
+- Pod networking
+- network communication
+- routing rules
+
+DaemonSet ensures every Node has the required networking Pod.
+
+---
+
+# 5. How DaemonSet Works
+
+1. User creates a DaemonSet YAML.
+
+2. Kubernetes checks all worker nodes.
+
+3. DaemonSet schedules one Pod on each node.
+
+4. If a new node is added:
+   - DaemonSet automatically creates a new Pod.
+
+5. If a node is removed:
+   - corresponding Pod is deleted automatically.
+
+---
+
+# 6. DaemonSet YAML Example (`ds.yaml`)
 
 ```yaml
 apiVersion: apps/v1
 kind: DaemonSet
+
 metadata:
   name: nginx
+
 spec:
   selector:
     matchLabels:
       app: nginx
+
   template:
     metadata:
       labels:
         app: nginx
+
     spec:
       containers:
       - name: nginx
@@ -139,7 +139,9 @@ spec:
         - containerPort: 80
 ```
 
-Apply:
+---
+
+# Apply DaemonSet
 
 ```bash
 kubectl apply -f ds.yaml
@@ -147,74 +149,95 @@ kubectl apply -f ds.yaml
 
 ---
 
-### Step 2: Check Cluster Nodes
+# Step 2: Check Cluster Nodes
 
 ```bash
 kubectl get nodes
 ```
 
-Output:
+### Example Output
 
-* Master → `ip-172-31-34-191`
-* Worker 1 → `ip-172-31-5-194`
-* Worker 2 → `ip-172-31-3-215`
+```text
+Master   → ip-172-31-34-191
+Worker1  → ip-172-31-5-194
+Worker2  → ip-172-31-3-215
+```
 
 ---
 
-### Step 3: Verify DaemonSet Pods
+# Step 3: Verify DaemonSet Pods
 
 ```bash
 kubectl get all -o wide
 ```
 
-* Shows all resources with Pod IPs, Node names, images.
-* You will see **2 nginx Pods** → one on each Worker Node.
-* No Pod on Master (`ip-172-31-34-191`).
+Shows:
+- Pod IPs
+- Node names
+- Images
+- Services
+
+You will see:
+- one nginx Pod on each Worker Node
+
+No Pod runs on the Master Node by default.
 
 ---
 
-### Step 4: Check Taints on Nodes
+# Step 4: Check Taints on Nodes
 
 ```bash
-kubectl describe node ip-172-31-34-191   # Master
-kubectl describe node ip-172-31-5-194   # Worker
+kubectl describe node ip-172-31-34-191
 ```
 
-* Worker Nodes → **No taints** → Pods scheduled normally.
-* Master Node → Has a **NoSchedule taint** → DaemonSet Pods not placed there.
+```bash
+kubectl describe node ip-172-31-5-194
+```
+
+### Result
+
+- Worker Nodes → No taints → Pods scheduled normally
+- Master Node → Has `NoSchedule` taint → DaemonSet Pods are not scheduled there
 
 ---
 
-## 5. Deploy DaemonSet on Master Node Also
+# 7. Deploy DaemonSet on Master Node Also
 
-### Step 1: Delete Old DaemonSet
+## Step 1: Delete Old DaemonSet
 
 ```bash
 kubectl delete -f ds.yaml
 ```
 
-### Step 2: Add Tolerations in YAML
+---
 
-Update `ds.yaml` with tolerations:
+## Step 2: Add Tolerations in YAML
+
+Update `ds.yaml`:
 
 ```yaml
 apiVersion: apps/v1
 kind: DaemonSet
+
 metadata:
   name: nginx
+
 spec:
   selector:
     matchLabels:
       app: nginx
+
   template:
     metadata:
       labels:
         app: nginx
+
     spec:
       tolerations:
       - key: "node-role.kubernetes.io/control-plane"
         operator: "Exists"
         effect: "NoSchedule"
+
       containers:
       - name: nginx
         image: nginx
@@ -222,25 +245,46 @@ spec:
         - containerPort: 80
 ```
 
-### Step 3: Apply Updated DaemonSet
+---
+
+## Step 3: Apply Updated DaemonSet
 
 ```bash
 kubectl apply -f ds.yaml
 ```
 
-### Step 4: Verify Pods
+---
+
+## Step 4: Verify Pods
 
 ```bash
 kubectl get pods -o wide
 ```
 
-Now you should see **3 nginx Pods** → one on Master + one on each Worker Node.
+Now you should see:
+- one nginx Pod on Master Node
+- one nginx Pod on each Worker Node
+
+Total:
+```text
+3 Pods
+```
 
 ---
 
-## 6. Key Takeaways
+# 8. Key Takeaways
 
-* **DaemonSet = One Pod per Node** → Kubernetes ensures this.
-* By default → Pods run only on **Worker Nodes**.
-* To include **Master Nodes** → add toleration for `NoSchedule` taint.
-* No replicas needed → Pod count always equals **Node count** (unlike Deployments).
+- DaemonSet = One Pod per Node
+- Kubernetes automatically maintains this behavior
+- By default, DaemonSet Pods run only on Worker Nodes
+- To run Pods on Master Node, add tolerations
+- DaemonSet does not use:
+  ```yaml
+  replicas:
+  ```
+- Pod count always equals Node count
+- Commonly used for:
+  - monitoring
+  - logging
+  - networking
+````
