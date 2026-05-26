@@ -1,202 +1,335 @@
+
 # Kubernetes Deployment
 
-## 1. What is a Deployment?
+---
 
-* Deployments are the backbone of Kubernetes applications.
-* They manage the lifecycle of Pods and provide features like scaling, rolling updates, and rollback.
+# 1. What is a Deployment?
 
-👉 When you define and use a Deployment:
-* The Deployment automatically creates a ReplicaSet in the background.
+A Deployment is a Kubernetes object used to deploy, manage, and update applications in a Kubernetes cluster.
+
+It is the most commonly used Kubernetes object in real-time projects because it automatically manages the complete lifecycle of Pods through ReplicaSets.
+
+Deployments are considered the backbone of Kubernetes applications.
+
+A Deployment provides features like:
+
+- Scaling
+- Self-healing
+- Rolling updates
+- Rollback
 
 ---
 
-## ReplicaSet Management
+# 2. Main Purpose of Deployment
 
-* The ReplicaSet ensures that the desired number of Pods are running at all times.
-* The ReplicaSet creates and manages Pods.
-* Inside each Pod, there can be one or more containers running your application.
+Deployment is mainly used for:
 
-📌 **Flow:** Deployment → ReplicaSets (RS) → Pods → Containers
-
----
-
-## Self-Healing in Deployments
-
-* Kubernetes automatically replaces failed or unhealthy Pods to maintain the desired state.
-* The controller manager constantly watches the Pods and recreates them if they fail.
-
-👉 Once the Deployment is set up:
-* The only manual task is updating configuration (e.g., changing image version).
-
-After that, Kubernetes handles:
-* Rolling updates (gradually replacing old Pods with new ones).
-* Rollbacks (if an update causes issues, Kubernetes rolls back to the previous stable version).
+- application deployment
+- application updates
+- scaling applications
+- rollback management
+- maintaining application availability
+- self-healing of failed Pods
+- zero-downtime deployments
 
 ---
 
-## 2. Key Features of Deployments
+# 3. Key Features of Deployment
 
-* **Replica Management** – Ensures the specified number of Pods are always running.  
-* **Rolling Updates** – Gradually replace old Pods with new ones without any downtime.  
-* **Rollback Capability** – If an update causes issues, Kubernetes automatically restores the previous stable version. 
-* **Declarative Scaling** – Adjust the number of replicas by changing a single field in the YAML file.  
+## 1. Self-Healing
 
-<img width="940" height="413" alt="image" src="https://github.com/user-attachments/assets/549ba0c4-37ff-4aa7-9854-2324a7beab5a" />
+If a Pod crashes or gets deleted, the Deployment automatically creates a new Pod to maintain the desired state with the help of a ReplicaSet.
 
 ---
 
-## 3. Deployment Strategies in Kubernetes
+## 2. Scaling
 
-When you release a new version of your application, Kubernetes offers different strategies to control how Pods are updated.  
-
-The two main strategies are:
-
-1. **Recreate**  
-2. **RollingUpdate**
+Deployment allows us to increase or decrease the number of Pod replicas based on application requirements.
 
 ---
 
-## 1. Recreate Strategy
+## 3. Rolling Updates
 
-* In this strategy, all the old Pods are terminated first, and then new Pods are created with the updated version.
-* This means there will be downtime during the update because, for a short period, no Pods are available to serve requests.
+Deployment updates the application version gradually without downtime by replacing old Pods with new Pods step-by-step.
+
+---
+
+## 4. Rollback
+
+If the new application version fails, Deployment allows rollback to the previous stable version.
+
+---
+
+## 5. High Availability
+
+Deployment ensures the required number of Pods are always running to keep the application highly available.
+
+---
+
+## 6. ReplicaSet Management
+
+Deployment internally creates and manages ReplicaSets, which are responsible for managing Pods.
+
+---
+
+# 4. Deployment Architecture in Kubernetes
+
+```text
+                Deployment
+                     │
+                     │ manages
+                     ▼
+                ReplicaSet
+                     │
+                     │ manages
+                     ▼
+                    Pods
+                     │
+                     │ contains
+                     ▼
+                Containers
+```
+
+---
+
+# 1. Deployment
+
+A Deployment is a Kubernetes object used to deploy, manage, and update applications in a Kubernetes cluster.
+
+It manages the complete lifecycle of applications.
+
+Deployment provides features like:
+
+- Scaling
+- Self-healing
+- Rolling updates
+- Rollback
+
+Deployment does not directly manage Pods. It manages Pods through ReplicaSets.
+
+---
+
+# 2. ReplicaSet
+
+A ReplicaSet is responsible for maintaining the desired number of Pods.
+
+Deployment internally creates and manages ReplicaSets automatically.
+
+If a Pod crashes or gets deleted, the ReplicaSet automatically creates a new Pod to maintain the desired state.
+
+ReplicaSet performs the actual Pod management and self-healing operations.
+
+---
+
+# 3. Pods
+
+A Pod is the smallest deployable unit in Kubernetes.
+
+Pods run one or more containers.
+
+---
+
+# 4. Containers
+
+Containers run the actual application inside the Pod.
+
+Examples:
+
+- Nginx
+- Java application
+- Python application
+
+---
+
+# 5. How Deployment Works
+
+1. User creates a Deployment YAML file using:
+
+```bash
+kubectl apply -f deployment.yaml
+```
+
+2. The Deployment automatically creates a ReplicaSet based on the Pod template defined in the YAML file.
+
+3. The ReplicaSet creates and maintains the required number of Pods.
+
+4. The Deployment continuously monitors ReplicaSets and Pods to maintain the desired state.
+
+5. If a Pod crashes or gets deleted, the ReplicaSet automatically creates a new Pod to maintain the desired state.
+
+6. Deployment updates the application version gradually without downtime by replacing old Pods with new Pods step-by-step.
+
+7. If the new application version fails, Deployment allows rollback to the previous stable version.
+
+---
+# 6. Deployment Strategies in Kubernetes
+
+Deployment strategies define how application updates are performed in Kubernetes.
+
+They control:
+
+- how old Pods are replaced
+- how new Pods are created
+- application availability during updates
+
+---
+
+# Types of Deployment Strategies
+
+## 1. RollingUpdate Strategy (Default)
+
+## 2. Recreate Strategy
+
+---
+
+# 1. Recreate Strategy
+
+Recreate strategy deletes all old Pods first, then creates new Pods.
 
 <img width="861" height="485" alt="image" src="https://github.com/user-attachments/assets/0ed261be-7ceb-4dfe-b4a7-dee8dc0cf439" />
 
+---
 
-### When to use Recreate?
+# How Recreate Strategy Works
 
-* When downtime is acceptable.  
-* When running two versions of the app at the same time could cause conflicts (e.g., database schema changes).  
-
-### Example Flow
-
+```text
+Old Pods Running
+        ↓
+Delete All Old Pods
+        ↓
+Create New Pods
 ```
-
-Step:1 Existing Pods → \[v1]\[v1]\[v1]
-Step:2 Delete all Pods
-Step:3 Start new Pods → \[v2]\[v2]\[v2]
-
-````
-
-⚠️ **Notice:** There’s a gap between step 2 and step 3 → downtime.
 
 ---
 
-### YAML Example (Recreate Strategy)
+# Disadvantages of Recreate
+
+- Application downtime occurs
+- Users cannot access application during update
+
+---
+
+# When Recreate is Used
+
+Recreate strategy is used when:
+
+- old and new versions cannot run together
+- database schema changes exist
+- compatibility issues exist between versions
+
+---
+
+# YAML Example (Recreate Strategy)
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
+
 metadata:
   name: javawebapp-deployment
-  namespace: test-ns
+  namespace: test
+
 spec:
   replicas: 3
+
   strategy:
     type: Recreate
+
   selector:
     matchLabels:
       app: javawebapp
+
   template:
     metadata:
       labels:
         app: javawebapp
+
     spec:
       containers:
       - name: javawebapp-container
-        image: satyamolleti4599/maven-web-app:1.0.0
+        image: kkeducation12345/spring-app:1.0.0
         ports:
         - containerPort: 8080
+
 ---
 apiVersion: v1
 kind: Service
+
 metadata:
-  name: javawebapp-service
-  namespace: test-ns
+  name: javawebapp-svc
+  namespace: test
+
 spec:
-  selector:
-    app: javawebapp
-  ports:
-    - protocol: TCP
-      port: 8080        # Service port
-      targetPort: 8080  # Container port
-      nodePort: 30008   # Must be between 30000–32767 if type=NodePort
   type: NodePort
 
-````
+  selector:
+    app: javawebapp
+
+  ports:
+  - port: 80
+    targetPort: 8080
+    nodePort: 30080
+```
 
 ---
 
-### Step 1: Apply Deployment
+# Apply Deployment
 
 ```bash
 kubectl apply -f deploy.yaml
-kubectl get all -n test-ns
 ```
-
-* Creates Deployment, ReplicaSet, Pods, Service.
-* Shows all resources (Pods with image 1.0.0).
-
-Pods running:
-
-```
-pod/javawebappdeploy-59466fe944-2xskd
-pod/javawebappdeploy-59466fe944-dnrcp
-pod/javawebappdeploy-59466fe944-c6f8f
-```
-
-Deployment details:
-
-* READY: 3/3
-* UP-TO-DATE: 3
-* AVAILABLE: 3
-
-ReplicaSet details:
-
-* DESIRED = 3
-* CURRENT = 3
-* READY = 3
-
-📌 **Deployment → ReplicaSet → Pods**
 
 ---
 
-### Checking Rollout Status
+# Verify Resources
 
 ```bash
-kubectl rollout status deployment javawebappdep -n test-ns
-```
-
-Output:
-
-```
-deployment "javawebappdep" successfully rolled out
+kubectl get all -n test
 ```
 
 ---
 
-### Step 2: Update to Version 1.0.1
+# Check Rollout Status
 
-* Update image in YAML:
+```bash
+kubectl rollout status deployment javawebapp-deployment -n test
+```
 
-  ```yaml
-  image: satyamolleti4599/maven-web-app:1.0.1
-  ```
+---
+
+# Update Application Version
+
+Update image version in YAML:
+
+```yaml
+image: kkeducation12345/spring-app:1.0.1
+```
+
+Apply changes:
 
 ```bash
 kubectl apply -f deploy.yaml
-kubectl get all -n test-ns
 ```
-
-Because strategy is **RollingUpdate**:
-
-* Old Pods are deleted in batches.
-* New Pods are created gradually → ✅ No downtime.
 
 ---
 
-## Step 3: Checking Deployment Rollout History
+# What Happens Internally?
+
+Because strategy is:
+
+```yaml
+type: Recreate
+```
+
+Kubernetes:
+
+1. Deletes all old Pods
+2. Creates new Pods with updated version
+
+This causes temporary downtime.
+
+---
+# Checking Deployment Rollout History
 
 * Each update creates a new ReplicaSet and a new revision number.
 * You can confirm which image was deployed and what configuration was applied.
@@ -208,12 +341,12 @@ kubectl rollout history deployment javawebappdep -n test-ns --revision=2
 
 ---
 
-### Step 4: Update Deployment to Version 1.0.2
+# Update Deployment to Version 1.0.2
 
 Change YAML:
 
 ```yaml
-image: satyamolleti4599/maven-web-app:1.0.2
+image:  kkeducation12345/spring-app:1.0.2
 ```
 
 Apply update:
@@ -230,7 +363,7 @@ kubectl get all -n test-ns
 Change YAML:
 
 ```yaml
-image: satyamolleti4599/maven-web-app:2.0.0
+image:  kkeducation12345/spring-app:2.0.0
 ```
 
 Apply and check rollout:
@@ -248,7 +381,7 @@ Rollout process shows:
 
 ---
 
-### Step 6: Kubernetes Deployment Rollout History and Rollback
+## Kubernetes Deployment Rollout History and Rollback
 
 1. **Check rollout history**
 
@@ -290,19 +423,17 @@ Rollout process shows:
 
 ## 2. RollingUpdate Strategy (Default in Kubernetes)
 
+## What is RollingUpdate?
+
+RollingUpdate is the default Deployment strategy in Kubernetes.
+
+Pods are updated gradually without downtime.
+
+Old Pods are replaced step-by-step with new Pods.
+
 <img width="886" height="485" alt="image" src="https://github.com/user-attachments/assets/0736f16d-dd03-4dab-b089-af21553ce50b" />
 
-
-### Overview
-
-* Pods are updated gradually, one by one (or in small batches).
-* Some old Pods keep running while new Pods are created.
-* Ensures minimal or zero downtime.
-
-When to use:
-
-* Application must be **available 24/7**
-* Safe for old and new versions to run together
+---
 
 ### Example Flow
 
@@ -322,7 +453,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: javawebapp-deployment
-  namespace: test-ns
+  namespace: test
 spec:
   replicas: 3
   strategy:
@@ -337,7 +468,7 @@ spec:
     spec:
       containers:
       - name: javawebapp-container
-        image: satyamolleti4599/maven-web-app:1.0.0
+        image:  kkeducation12345/spring-app:1.0.0
         ports:
         - containerPort: 8080
 ---
