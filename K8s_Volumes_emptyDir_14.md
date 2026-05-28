@@ -1,30 +1,52 @@
-# ✅ Kubernetes Volumes
+# Kubernetes Volumes
 
 ## 1. Why Do We Need Kubernetes Volumes?
 
-By default, **data stored inside a container is temporary**.
+By default, data stored inside a container running in a Pod is temporary (**ephemeral**).
 
 This means:
 
-* If a **container restarts → data is lost**
-* If a **pod is rescheduled to another node → data is lost**
+* If a container restarts → data may be lost
+* If a Pod is deleted or rescheduled to another node → data is lost
 
-➡️ To solve this, Kubernetes introduces **Volumes** to store data outside the container filesystem.
+As a result:
+
+* Logs disappear
+* Uploaded files disappear
+* Database data gets deleted
+
+Because containers do not store data permanently, Kubernetes introduces **Volumes** to store data outside the container filesystem.
+
+Volumes provide:
+
+* Persistent storage
+* Permanent data retention
+* Shared storage between containers
+* Data retention during container restart
+* Stable storage for stateful applications
+
+Volumes are attached to the Pod, and containers inside the Pod mount and use the Volume.
 
 ---
 
-## 2. What Is a Volume in Kubernetes?
+# 2. What is a Volume in Kubernetes?
 
-Kubernetes Volumes allow Pods/containers to store and access data persistently. Since containers are ephemeral (deleted → data lost), 
-Volumes solve the problem of data persistence, especially for databases like MongoDB, MySQL, PostgreSQL, etc. It allowing to
+A Kubernetes Volume is a storage mechanism that allows containers inside a Pod to store and access data persistently.
 
-✔ Data persistence
-✔ Data sharing between containers
-✔ Storage managed by cluster/node/cloud
+## Features of Kubernetes Volumes
 
-📌 **Important:**
-A Volume is attached to a **Pod**, *not to a container.*
-However, containers inside the same pod can mount and use it.
+* Persistent storage
+* Permanent data retention
+* Shared storage between containers
+* Data retention during container restart
+* Stable storage for stateful applications
+
+By default, container storage is:
+
+* Temporary
+* Deleted when the container crashes/restarts
+
+Volumes solve this problem.
 
 ---
 
@@ -32,23 +54,25 @@ However, containers inside the same pod can mount and use it.
 
 ## 1️⃣ emptyDir
 
-`emptyDir` is a **temporary storage space** created when the Pod starts.
+`emptyDir` is a temporary Volume created automatically when a Pod is assigned to a node.
 
-### Features:
+It provides temporary storage shared between containers running inside the same Pod.
+
+## Features
 
 * Created when Pod starts
 * Deleted when Pod is removed
-* Suitable for **temporary data**
-* Good for **sharing files between containers in the same Pod**
+* Suitable for temporary data
+* Good for temporary storage shared between containers running inside the same Pod
 
-### Common Use Cases:
+## Common Use Cases
 
 * Logs
 * Cache
-* Temporary processing files
+* Temporary files
 * Shared data between containers in same Pod
 
-### YAML Example
+## YAML Example
 
 ```yaml
 volumes:
@@ -58,48 +82,61 @@ volumes:
 
 ---
 
-# 🟦 Spring Application Deployment (Example)
+# 4. Spring Application Deployment (Example)
 
-### `springapp.yaml`
+## springapp.yaml
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: springapp
+  name: springapp-pod
   namespace: test
+
 spec:
   replicas: 2
+
   selector:
     matchLabels:
       app: springapp
+
   template:
     metadata:
       labels:
         app: springapp
+
     spec:
       containers:
-      - name: springapp
+      - name: springapp-container
         image: kkeducation12345/spring-app:1.0.0
+
         ports:
         - containerPort: 8080
+
         env:
         - name: MONGO_DB_HOSTNAME
           value: mongosvc
+
         - name: MONGO_DB_USERNAME
           value: devdb
+
         - name: MONGO_DB_PASSWORD
           value: devdb@123
+
 ---
 apiVersion: v1
 kind: Service
+
 metadata:
-  name: springappsvc
+  name: springapp-svc
   namespace: test
+
 spec:
   type: NodePort
+
   selector:
     app: springapp
+
   ports:
   - port: 80
     targetPort: 8080
@@ -107,60 +144,74 @@ spec:
 
 ---
 
-# 🟩 MongoDB ReplicaSet with emptyDir Volume
+# 5. MongoDB ReplicaSet with emptyDir Volume
 
-### `mongo_db_with_emptyDir.yaml`
+## mongo_db_with_emptyDir.yaml
 
 ```yaml
 apiVersion: apps/v1
 kind: ReplicaSet
-metadata: 
+
+metadata:
   name: mongodb-emptydir-rs
   namespace: test
+
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: mongodb
+
   template:
     metadata:
       labels:
         app: mongodb
+
     spec:
       containers:
       - name: mongocon
-        image: mongo:8.0.9-noble
+        image: mongo:6.0
+
         ports:
         - containerPort: 27017
+
         env:
         - name: MONGO_INITDB_ROOT_USERNAME
           value: devdb
+
         - name: MONGO_INITDB_ROOT_PASSWORD
           value: devdb@123
+
         volumeMounts:
         - name: mongo-emptydir-storage
           mountPath: /data/db
+
       volumes:
       - name: mongo-emptydir-storage
         emptyDir: {}
+
 ---
 apiVersion: v1
 kind: Service
+
 metadata:
   name: mongosvc
   namespace: test
+
 spec:
   type: ClusterIP
+
   selector:
     app: mongodb
+
   ports:
   - port: 27017
     targetPort: 27017
 ```
-
 ---
 
-# 🚀 Commands to Deploy
+# Commands to Deploy
 
 ```bash
 kubectl apply -f mongo_db_with_emptyDir.yaml
@@ -178,7 +229,7 @@ kubectl describe pod <pod-name> -n test
 
 ---
 
-# 🔍 How to Check MongoDB Data is Stored
+#  How to Check MongoDB Data is Stored
 
 <img width="1916" height="967" alt="image" src="https://github.com/user-attachments/assets/d06b2053-d15f-4238-9ca9-28bf285c9aff" />
 
@@ -219,7 +270,7 @@ This confirms MongoDB is writing data to the emptyDir volume.
 
 ---
 
-# 🧪 Test: Delete Pod and Check Data
+#  Test: Delete Pod and Check Data
 
 ## Step 1 — Delete Pod
 
