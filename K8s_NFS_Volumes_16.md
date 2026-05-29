@@ -15,15 +15,11 @@ NFS provides centralized, shared, and persistent storage that can be accessed si
 
 ## Why Do We Need NFS?
 
-In a distributed environment, multiple servers or Kubernetes worker nodes may need access to the same data.
+We need NFS (Network File System) to provide a centralized shared storage location that can be accessed by multiple servers or clients simultaneously.
 
-Storing data locally on individual servers can lead to:
+Without NFS, data is stored locally on individual systems, which can lead to data inconsistency, duplication, and availability issues.
 
-* Data inconsistency
-* Data duplication
-* Data loss when applications move between nodes
-
-NFS solves this problem by providing a centralized storage location that can be shared across multiple systems.
+NFS solves this problem by allowing multiple systems to access the same shared data, ensuring consistency and persistence.
 
 ---
 
