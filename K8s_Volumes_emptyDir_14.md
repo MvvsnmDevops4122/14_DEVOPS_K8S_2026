@@ -27,6 +27,8 @@ Volumes provide:
 
 Volumes are attached to the Pod, and containers inside the Pod mount and use the Volume.
 
+Pod created  → Volume provisioned → Mounted into container → Container reads/writes → Pod deleted → Volume released/deleted
+
 ---
 
 # 2. What is a Volume in Kubernetes?
