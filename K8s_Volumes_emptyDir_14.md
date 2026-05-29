@@ -308,3 +308,146 @@ ls /data/db
 Because:
 
 > **emptyDir data is deleted whenever the Pod is deleted.**
+---
+
+## How emptyDir Volume is Stored on the Node
+
+`emptyDir` uses the local storage of the worker node where the Pod is running.
+
+When a Pod is scheduled to a node:
+
+* Kubernetes automatically creates the `emptyDir` volume on that node.
+* The volume is attached to the Pod.
+* Containers access the volume through the specified `mountPath`.
+
+### Example
+
+```yaml
+volumes:
+- name: mongo-data
+  emptyDir: {}
+
+volumeMounts:
+- name: mongo-data
+  mountPath: /data/db
+```
+
+In this example:
+
+* Volume Name = `mongo-data`
+* Mount Path = `/data/db`
+
+MongoDB stores its data inside `/data/db`, which is backed by the `emptyDir` volume.
+
+---
+
+## How to Verify emptyDir Volume is Mounted
+
+### Step 1: Check Pod YAML
+
+```bash
+kubectl get pod mongo-rs-nczzb -n test -o yaml
+```
+
+Verify:
+
+```yaml
+volumes:
+- emptyDir: {}
+  name: mongo-data
+```
+
+and
+
+```yaml
+volumeMounts:
+- mountPath: /data/db
+  name: mongo-data
+```
+
+---
+
+### Step 2: Check Inside the Container
+
+Login into the Pod:
+
+```bash
+kubectl exec -it mongo-rs-nczzb -n test -- sh
+```
+
+Check the mount:
+
+```bash
+mount | grep /data/db
+```
+
+Output:
+
+```bash
+/dev/root on /data/db type ext4
+```
+
+This confirms that storage is mounted at `/data/db`.
+
+---
+
+## How to Verify emptyDir on the Worker Node
+
+### Step 1: Find Pod UID
+
+```bash
+kubectl get pod mongo-rs-nczzb -n test -o jsonpath='{.metadata.uid}'
+```
+
+Example:
+
+```bash
+9fc81a23-38dc-4fa7-8297-26a03f86971f
+```
+
+### Step 2: Login to the Worker Node
+
+```bash
+ssh ubuntu@<worker-node>
+```
+
+### Step 3: Navigate to Pod Storage Directory
+
+```bash
+cd /var/lib/kubelet/pods/<POD-UID>/volumes/
+```
+
+Example:
+
+```bash
+cd /var/lib/kubelet/pods/9fc81a23-38dc-4fa7-8297-26a03f86971f/volumes/
+```
+
+### Step 4: Verify emptyDir Volume
+
+```bash
+ls
+```
+
+Output:
+
+```bash
+kubernetes.io~empty-dir
+kubernetes.io~projected
+```
+
+Check the volume:
+
+```bash
+ls kubernetes.io~empty-dir/
+```
+
+Output:
+
+```bash
+mongo-data
+```
+
+This confirms that the `emptyDir` volume exists on the worker node.
+
+---
