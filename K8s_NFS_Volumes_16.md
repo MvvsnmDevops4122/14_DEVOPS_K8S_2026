@@ -15,11 +15,11 @@ NFS provides centralized, shared, and persistent storage that can be accessed si
 
 ## Why Do We Need NFS?
 
-We need NFS (Network File System) to provide a centralized shared storage location that can be accessed by multiple servers or clients simultaneously.
+We need NFS (Network File System) to provide a centralized shared storage location that can be accessed by multiple servers, clients, or worker nodes simultaneously.
 
-Without NFS, data is stored locally on individual systems, which can lead to data inconsistency, duplication, and availability issues.
+Without NFS, data is stored locally on individual servers or worker nodes. If an application moves to another server or node, it may not be able to access the same data.
 
-NFS solves this problem by allowing multiple systems to access the same shared data, ensuring consistency and persistence.
+NFS solves this problem by providing shared storage that can be accessed by multiple servers or worker nodes, ensuring data availability, consistency, and persistence.
 
 ---
 
