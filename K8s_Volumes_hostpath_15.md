@@ -180,9 +180,9 @@ kubectl apply -f springapp.yaml
 kubectl get pods -n test-ns
 kubectl get svc -n test-ns
 ```
-📌 Accessing Application Through NodeIP:Port
+Accessing Application Through NodeIP:Port
 
-🖥️ ✔ How to Access Application
+ ✔ How to Access Application
 👉 From Browser or Curl:
 http://<Node-IP>:<NodePort>
 
@@ -281,24 +281,25 @@ You will see MongoDB's files (WiredTiger, .wt files, journal).
 ### 3 — Delete the Pod
 
 If using ReplicaSet or Deployment:
-
+```
 kubectl delete pod <mongodb-pod> -n test
-
+```
 
 Kubernetes will automatically create a new Pod.
 
 ### 4 — Check Pod Re-Created
+```
 kubectl get pods -n test
 
-
+```
 You will see a new pod created automatically.
 
 ### 5 — Verify Data Inside New Pod
 
 Now check the data directory again inside the new pod:
-
+```
 kubectl exec -it <new-mongodb-pod> -n test -- ls /data/db
-
+```
 
 If hostPath is working correctly, you will see:
 
@@ -309,42 +310,32 @@ journal/
 
 
 ✔ Data restored → Persistence working
-❌ If empty → hostPath path is wrong or node changed
+If empty → hostPath path is wrong or node changed
 
-📌 Step 6 — Verify Data Still Present on Node
+### Step 6 — Verify Data Still Present on Node
+
+```
 ls -l /mongobkp
-
+```
 
 This ensures data never got deleted.
 
 ⚠️ Important: hostPath Works Only If Pod Comes Back on SAME Node
 
-If new Pod gets scheduled on another node, hostPath folder will not exist → data looks lost.
+* If new Pod gets scheduled on another node, hostPath folder will not exist → data looks lost.
 
-To prevent this, check node of Pod:
-
+* To prevent this, check node of Pod:
+```
 kubectl get pod -n test -o wide
-
+```
 
 You will see:
-
+```
 NAME          NODE
 mongodb-xxx   ip-172-31-21-134
-
+```
 
 If Pod restarts on same node → data is safe
 If Pod moves to another node → data will be empty
 
-## Limitations
-
 ---
-
-* Pod works only on the node where the hostPath folder exists.
-
-* If the node fails, all data stored using hostPath is lost.
-
-* Not suitable for production because it doesn’t support high availability or scaling.
-
-* HostPath gives containers access to the host filesystem, which is a security risk.
-
-```
