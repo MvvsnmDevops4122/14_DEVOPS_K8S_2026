@@ -298,12 +298,12 @@ kubectl exec -it <new-pod-name> -n test -- bash
 ls /data/db
 ```
 
-### ❗ RESULT:
+###  RESULT:
 
 * Folder `/data/db` exists
 * **BUT old data is gone**
 
-### 🔥 Why?
+###  Why?
 
 Because:
 
