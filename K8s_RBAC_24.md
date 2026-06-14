@@ -110,6 +110,32 @@ aws --version
 
 ---
 
+## Step 3: Create IAM User and Generate Access Keys
+
+# Create IAM User
+
+Open AWS Console.
+Navigate to IAM → Users.
+Click Create User.
+Enter Username.
+Attach required permissions.
+
+Example:
+
+eks-readonly-user
+
+# Create Access Key
+
+Open IAM User.
+Go to Security Credentials.
+Click Create Access Key.
+Choose CLI Access.
+Copy:
+Access Key ID
+Secret Access Key
+
+⚠️ Never commit credentials to GitHub.
+
 ## Step 3: Configure AWS CLI
 
 ```bash
